@@ -1,20 +1,28 @@
-version: "3"
+version: '3.7'
 services:
-  hapi-fhir-jpaserver-start:
+  fhir-server:
     build: .
     container_name: hapi-fhir-jpaserver-start
-    restart: on-failure
     ports:
-      - "8080:8080"
-  hapi-fhir-postgres:
-    image: postgres:13-alpine
-    container_name: hapi-fhir-postgres
-    restart: always
-    environment:
-      POSTGRES_DB: "hapi"
-      POSTGRES_USER: "admin"
-      POSTGRES_PASSWORD: "admin"
+      - "80:8080"
+    restart: on-failure
     volumes:
-      - hapi-fhir-postgres:/var/lib/postgresql/data
-volumes:
-  hapi-fhir-postgres:
+     - ./hapi_data:/data/hapi
+    environment:
+     SPRING_CONFIG_LOCATION: 'file:///data/hapi/hl7pt.yml'
+    depends_on:
+        - mariadb
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci  --lower_case_table_names=1
+    volumes:
+    - ./data/mysql:/var/lib/mysql
+    - ./mariadbconf:/etc/mysql/conf.d
+    environment:
+    - MYSQL_DATABASE=hapi
+    - MYSQL_ROOT_PASSWORD=admin
+    - MYSQL_USER=admin
+    - MYSQL_PASSWORD=admin
+    ports:
+    - "3306:3306"
